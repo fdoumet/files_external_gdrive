@@ -146,4 +146,24 @@ class OauthController extends Controller {
 			Http::STATUS_BAD_REQUEST
 		);
 	}
+
+	public function handleSave($id) {
+		$data = file_get_contents('php://input');
+		str_replace("dummy_id", getenv('MLVX_GDRIVE_CLIENT_ID'),$data);
+		str_replace("dummy_secret", getenv('MLVX_GDRIVE_CLIENT_SECRET'),$data);
+
+		$domain = $_SERVER['HTTP_HOST'];
+		$prefix = $_SERVER['HTTPS'] ? 'https://' : 'http://';
+		$relative = "/index.php/apps/files_external/userstorages/" . $id;
+		$req = curl_init();
+		curl_setopt_array($req, [
+			CURLOPT_URL            => $prefix.$domain.$relative,
+			CURLOPT_CUSTOMREQUEST  => "PUT",
+			CURLOPT_POSTFIELDS     => json_encode($data),
+			CURLOPT_HTTPHEADER     => [ "Content-Type" => "application/json" ],
+			CURLOPT_RETURNTRANSFER => true,
+		]);
+
+		curl_exec($req);
+	}
 }

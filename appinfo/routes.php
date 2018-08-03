@@ -24,5 +24,6 @@ $application = new \OCA\Files_external_gdrive\AppInfo\Application();
 $application->registerRoutes($this, [
 	'routes' => [
 		['name' => 'oauth#receiveToken', 'url' => '/oauth', 'verb' => 'POST'],
+		['name' => 'oauth#handleSave', 'url' => '/userstorages/{id}', 'verb' => 'POST']
 	],
 ]);
