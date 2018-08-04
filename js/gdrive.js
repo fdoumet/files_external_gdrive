@@ -95,7 +95,7 @@ $(document).ready(function () {
  * @namespace OAuth2 namespace which is used to verify a storage adapter
  *            using AuthMechanism as oauth2::oauth2
  */
-OCA.External.Settings.OAuth2 = OCA.External.Settings.OAuth2 || {};
+OCA.GDrive.Settings.OAuth2 = OCA.GDrive.Settings.OAuth2 || {};
 
 /**
  * This function sends a request to the given backendUrl and gets the OAuth2 URL
@@ -105,7 +105,7 @@ OCA.External.Settings.OAuth2 = OCA.External.Settings.OAuth2 || {};
  * @param  {String}   backendUrl The backend URL to which request will be sent
  * @param  {Object}   data       Keys -> (backend_id, client_id, client_secret, redirect, tr)
  */
-OCA.External.Settings.OAuth2.getAuthUrl = function (backendUrl, data) {
+OCA.GDrive.Settings.OAuth2.getAuthUrl = function (backendUrl, data) {
 	$('.configuration [data-parameter="client_id"]').val("dummy_id");
 	$('.configuration [data-parameter="client_secret"]').val("dummy_secret");
 
@@ -123,7 +123,7 @@ OCA.External.Settings.OAuth2.getAuthUrl = function (backendUrl, data) {
 				$(configured).val('false');
 				$(token).val('false');
 
-				OCA.External.Settings.mountConfig.saveStorageConfig($tr, function (status) {
+				OCA.GDrive.Settings.mountConfig.saveStorageConfig($tr, function (status) {
 					if (!result.data.url) {
 						OC.dialogs.alert('Auth URL not set',
 							t('files_external', 'No URL provided by backend ' + data['backend_id'])
@@ -150,7 +150,7 @@ OCA.External.Settings.OAuth2.getAuthUrl = function (backendUrl, data) {
  * @param  {Object}   data       Keys -> (backend_id, client_id, client_secret, redirect, tr, code)
  * @return {Promise} jQuery Deferred Promise object
  */
-OCA.External.Settings.OAuth2.verifyCode = function (backendUrl, data) {
+OCA.GDrive.Settings.OAuth2.verifyCode = function (backendUrl, data) {
 	$('.configuration [data-parameter="client_id"]').val("dummy_id");
 	$('.configuration [data-parameter="client_secret"]').val("dummy_secret");
 
@@ -173,7 +173,7 @@ OCA.External.Settings.OAuth2.verifyCode = function (backendUrl, data) {
 				$(token).val(result.data.token);
 				$(configured).val('true');
 
-				OCA.External.Settings.mountConfig.saveStorageConfig($tr, function (status) {
+				OCA.GDrive.Settings.mountConfig.saveStorageConfig($tr, function (status) {
 					if (status) {
 						$tr.find('.configuration input.auth-param')
 							.attr('disabled', 'disabled')
