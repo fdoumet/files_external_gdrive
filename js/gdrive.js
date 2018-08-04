@@ -6,7 +6,7 @@ $(document).ready(function () {
 		$tr.find('.configuration input.auth-param').attr('disabled', 'disabled').addClass('disabled-success');
 	}
 
-	OCA.GDrive.Settings.mountConfig.whenSelectAuthMechanism(function ($tr, authMechanism, scheme, onCompletion) {
+	OCA.External.Settings.mountConfig.whenSelectAuthMechanism(function ($tr, authMechanism, scheme, onCompletion) {
 		if (authMechanism === 'oauth2::oauth2') {
 			var config = $tr.find('.configuration');
 			// hack to prevent conflict with oauth2 code from files_external
@@ -74,7 +74,7 @@ $(document).ready(function () {
 			return false;	// means the trigger is not for this storage adapter
 		}
 
-		OCA.GDrive.Settings.OAuth2.getAuthUrl(backendUrl, data);
+		OCA.External.Settings.OAuth2.getAuthUrl(backendUrl, data);
 	});
 
 	$('.configuration').on('oauth_step2', function (event, data) {
@@ -82,7 +82,7 @@ $(document).ready(function () {
 			return false;		// means the trigger is not for this OAuth2 grant
 		}
 
-		OCA.GDrive.Settings.OAuth2.verifyCode(backendUrl, data)
+		OCA.External.Settings.OAuth2.verifyCode(backendUrl, data)
 			.fail(function (message) {
 				OC.dialogs.alert(message,
 					t(backendId, 'Error verifying OAuth2 Code for ' + backendId)
@@ -95,7 +95,7 @@ $(document).ready(function () {
  * @namespace OAuth2 namespace which is used to verify a storage adapter
  *            using AuthMechanism as oauth2::oauth2
  */
-OCA.GDrive.Settings.OAuth2 = OCA.GDrive.Settings.OAuth2 || {};
+OCA.External.Settings.OAuth2 = OCA.External.Settings.OAuth2 || {};
 
 /**
  * This function sends a request to the given backendUrl and gets the OAuth2 URL
@@ -105,7 +105,7 @@ OCA.GDrive.Settings.OAuth2 = OCA.GDrive.Settings.OAuth2 || {};
  * @param  {String}   backendUrl The backend URL to which request will be sent
  * @param  {Object}   data       Keys -> (backend_id, client_id, client_secret, redirect, tr)
  */
-OCA.GDrive.Settings.OAuth2.getAuthUrl = function (backendUrl, data) {
+OCA.External.Settings.OAuth2.getAuthUrl = function (backendUrl, data) {
 	$('.configuration [data-parameter="client_id"]').val("dummy_id");
 	$('.configuration [data-parameter="client_secret"]').val("dummy_secret");
 
@@ -123,7 +123,7 @@ OCA.GDrive.Settings.OAuth2.getAuthUrl = function (backendUrl, data) {
 				$(configured).val('false');
 				$(token).val('false');
 
-				OCA.GDrive.Settings.mountConfig.saveStorageConfig($tr, function (status) {
+				OCA.External.Settings.mountConfig.saveStorageConfig($tr, function (status) {
 					if (!result.data.url) {
 						OC.dialogs.alert('Auth URL not set',
 							t('files_external', 'No URL provided by backend ' + data['backend_id'])
@@ -150,7 +150,7 @@ OCA.GDrive.Settings.OAuth2.getAuthUrl = function (backendUrl, data) {
  * @param  {Object}   data       Keys -> (backend_id, client_id, client_secret, redirect, tr, code)
  * @return {Promise} jQuery Deferred Promise object
  */
-OCA.GDrive.Settings.OAuth2.verifyCode = function (backendUrl, data) {
+OCA.External.Settings.OAuth2.verifyCode = function (backendUrl, data) {
 	$('.configuration [data-parameter="client_id"]').val("dummy_id");
 	$('.configuration [data-parameter="client_secret"]').val("dummy_secret");
 
@@ -173,7 +173,7 @@ OCA.GDrive.Settings.OAuth2.verifyCode = function (backendUrl, data) {
 				$(token).val(result.data.token);
 				$(configured).val('true');
 
-				OCA.GDrive.Settings.mountConfig.saveStorageConfig($tr, function (status) {
+				saveStorageConfig($tr, function (status) {
 					if (status) {
 						$tr.find('.configuration input.auth-param')
 							.attr('disabled', 'disabled')
@@ -188,3 +188,56 @@ OCA.GDrive.Settings.OAuth2.verifyCode = function (backendUrl, data) {
 	);
 	return deferredObject.promise();
 };
+
+function saveStorageConfig ($tr, callback, concurrentTimer) {
+		var storage = OCA.External.Settings.mountConfig.getStorageConfig($tr);
+		if (!storage || !storage.validate()) {
+			return false;
+		}
+
+	OCA.External.Settings.mountConfig.updateStatus($tr, -1);
+	saveConfig(storage,{
+			success: function(result) {
+				if (concurrentTimer === undefined
+					|| $tr.data('save-timer') === concurrentTimer
+				) {
+					OCA.External.Settings.mountConfig.updateStatus($tr, result.status);
+					$tr.data('id', result.id);
+
+					if (_.isFunction(callback)) {
+						callback(storage);
+					}
+				}
+			},
+			error: function() {
+				if (concurrentTimer === undefined
+					|| $tr.data('save-timer') === concurrentTimer
+				) {
+					OCA.External.Settings.mountConfig.updateStatus($tr, 1);
+				}
+			}
+		});
+}
+
+function saveConfig (config, options){
+	var configUrl = config._url.replace("files_external", "files_external_gdrive");
+	var url = OC.generateUrl(configUrl);
+	var method = 'POST';
+	if (_.isNumber(config.id)) {
+		url = OC.generateUrl(configUrl + '/{id}', {id: config.id});
+	}
+
+	$.ajax({
+		type: method,
+		url: url,
+		contentType: 'application/json',
+		data: JSON.stringify(config.getData()),
+		success: function(result) {
+			config.id = result.id;
+			if (_.isFunction(options.success)) {
+				options.success(result);
+			}
+		},
+		error: options.error
+	});
+}
