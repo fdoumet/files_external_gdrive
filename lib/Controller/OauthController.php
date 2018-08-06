@@ -154,16 +154,12 @@ class OauthController extends Controller {
 	/**
 	 * Create a storage from its parameters
 	 *
-	 * @param string $client_id
-	 * @param string $client_secret
-	 * @param string $redirect
-	 * @param int $step
-	 * @param string $code
+	 * @param string $id
 	 * @return IStorageConfig|DataResponse
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
-	public function handleSave($id, $headers) {
+	public function handleSave($id) {
 		$data = file_get_contents('php://input');
 		$data = str_replace("dummy_id", getenv('MLVX_GDRIVE_CLIENT_ID'),$data);
 		$data = str_replace("dummy_secret", getenv('MLVX_GDRIVE_CLIENT_SECRET'),$data);
