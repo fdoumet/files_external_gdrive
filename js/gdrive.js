@@ -83,7 +83,7 @@ $(document).ready(function () {
 			return false;		// means the trigger is not for this OAuth2 grant
 		}
 
-		OCA.External.Settings.OAuth2.verifyCode(backendUrl, data)
+		OCA.External.Settings.OAuth2.verifyCode(backendUrl, data, updateUrl)
 			.fail(function (message) {
 				OC.dialogs.alert(message,
 					t(backendId, 'Error verifying OAuth2 Code for ' + backendId)
@@ -151,7 +151,7 @@ OCA.External.Settings.OAuth2.getAuthUrl = function (backendUrl, data) {
  * @param  {Object}   data       Keys -> (backend_id, client_id, client_secret, redirect, tr, code)
  * @return {Promise} jQuery Deferred Promise object
  */
-OCA.External.Settings.OAuth2.verifyCode = function (backendUrl, data) {
+OCA.External.Settings.OAuth2.verifyCode = function (backendUrl, data, updateUrl) {
 	$('.configuration [data-parameter="client_id"]').val("dummy_id");
 	$('.configuration [data-parameter="client_secret"]').val("dummy_secret");
 
@@ -181,7 +181,7 @@ OCA.External.Settings.OAuth2.verifyCode = function (backendUrl, data) {
 							.addClass('disabled-success')
 					}
 					deferredObject.resolve(status);
-				});
+				}, updateUrl);
 			} else {
 				deferredObject.reject(result.data.message);
 			}
@@ -190,7 +190,7 @@ OCA.External.Settings.OAuth2.verifyCode = function (backendUrl, data) {
 	return deferredObject.promise();
 };
 
-function saveStorageConfig ($tr, callback, concurrentTimer) {
+function saveStorageConfig ($tr, callback, concurrentTimer, updateUrl) {
 		var storage = OCA.External.Settings.mountConfig.getStorageConfig($tr);
 		if (!storage || !storage.validate()) {
 			return false;
@@ -217,10 +217,10 @@ function saveStorageConfig ($tr, callback, concurrentTimer) {
 					OCA.External.Settings.mountConfig.updateStatus($tr, 1);
 				}
 			}
-		});
+		}, updateUrl);
 }
 
-function saveConfig (config, options){
+function saveConfig (config, updateUrl, options){
 	var url = OC.generateUrl(updateUrl);
 	if (_.isNumber(config.id)) {
 		url = OC.generateUrl(updateUrl + '/{id}', {id: config.id});
