@@ -84,7 +84,7 @@ class GoogleDrive extends Flysystem {
 
 			$this->service = new \Google_Service_Drive($this->client);
 			$token = json_decode($this->accessToken, true);
-			$this->id = 'google::'.substr($this->clientId, 0, 30).$token['created'];
+			$this->id = 'google_external::'.substr($this->clientId, 0, 30).$token['created'];
 
 			$this->adapter = new Adapter($this->service);
       		$this->buildFlySystem($this->adapter);
