@@ -26,7 +26,7 @@ use Icewind\Streams\IteratorDirectory;
 use Icewind\Streams\RetryWrapper;
 use Icewind\Streams\CallbackWrapper;
 
-class GoogleDrive extends Flysystem {
+class GoogleDrive extends CacheableFlysystemAdapter {
     const APP_NAME = 'Files_external_gdrive';
     
     protected $config = [
