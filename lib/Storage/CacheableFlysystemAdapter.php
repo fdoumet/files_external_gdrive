@@ -118,6 +118,7 @@ abstract class CacheableFlysystemAdapter extends Flysystem {
 
 		// We now try to find the file
 		foreach ($contents as $content) {
+			\OC::$server->getLogger()->error($content);
 			if ($content['dirname'] === $path) {
 				if ($content['basename'] === $file)
 					return $content['path'];
