@@ -64,12 +64,65 @@ abstract class CacheableFlysystemAdapter extends Flysystem {
 		return $location;
 	}
 
-	public function buildPath($path, $modifyCase = false) {
-		$location = parent::buildPath($path);
-		if ($this->isCaseInsensitiveStorage && $modifyCase) {
-			$location = strtolower($location);
+	public function buildPath($originalPath, $modifyCase = false) {
+		if ($originalPath === '' || $originalPath === '.' || $originalPath === $this->root)
+			return $this->root;
+
+		$fullPath = \OC\Files\Filesystem::normalizePath($originalPath);
+
+		if ($fullPath === '')
+			return $this->root;
+
+		$dirs = explode('/', substr($fullPath, 1));
+
+		$file = end($dirs);
+		unset($dirs[count($dirs) - 1]);
+
+
+		$canReload = (count($this->cacheFileObjects) > 0);
+		$contents = $this->getContents();
+		$path = 'root';
+		$nbrSub = 1;
+
+		foreach ($dirs as $dir) {
+			$initNbr = $nbrSub;
+
+			foreach ($contents as $key => $content) {
+				if ($content['type'] !== 'dir')
+					continue;
+
+				if ($content['dirname'] === $path) {
+					if ($content['basename'] === $dir) {
+						$path = $content['path'];
+
+						$nbrSub++;
+						break;
+					}
+
+					unset($contents[$key]);
+				}
+				elseif (substr_count($content['dirname'], '/') <= $nbrSub)
+					unset($contents[$key]);
+			}
+
+			if ($initNbr === $nbrSub)
+				throw new FileNotFoundException(implode('/', array_slice($dirs, 0, $key)));
 		}
-		return $location;
+
+		// We now try to find the file
+		foreach ($contents as $content) {
+			if ($content['dirname'] === $path) {
+				if ($content['basename'] === $file)
+					return $content['path'];
+			}
+		}
+
+		if ($canReload) {
+			$this->cacheFileObjects = [];
+			return $this->buildPath($originalPath);
+		}
+
+		return $path.'/'.$file;
 	}
 
 	/**
