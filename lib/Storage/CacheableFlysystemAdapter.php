@@ -50,6 +50,13 @@ abstract class CacheableFlysystemAdapter extends Flysystem {
 		return $this;
 	}
 
+	protected function getContents() {
+		if (count($this->cacheContents) === 0)
+			$this->cacheFileObjects = $this->flysystem->listContents($this->root, true);
+
+		return $this->cacheContents;
+	}
+
 	/**
 	 * Get the location which will be used as a key in cache
 	 * If Storage is not case sensitive then convert the key to lowercase
@@ -79,7 +86,7 @@ abstract class CacheableFlysystemAdapter extends Flysystem {
 		unset($dirs[count($dirs) - 1]);
 
 
-		$canReload = (count($this->cacheFileObjects) > 0);
+		$canReload = (count($this->cacheContents) > 0);
 		$contents = $this->getContents();
 		$path = 'root';
 		$nbrSub = 1;
@@ -187,7 +194,6 @@ abstract class CacheableFlysystemAdapter extends Flysystem {
 				unset($this->cacheContents[$this->getCacheLocation($path)]);
 				return parent::fopen($path, $mode);
 		}
-		return false;
 	}
 
 	/**
